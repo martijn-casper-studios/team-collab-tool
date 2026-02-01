@@ -2,10 +2,6 @@ import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { teamMembers } from "@/data/team";
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
-
 const systemPrompt = `You are a helpful team collaboration assistant for Casper Studios. Your role is to help team members understand each other better and work together more effectively.
 
 You have access to detailed personality profiles for all team members based on MBTI, DISC, Enneagram, CliftonStrengths, and Big Five assessments.
@@ -54,6 +50,10 @@ export async function POST(request: Request) {
         { status: 500 }
       );
     }
+
+    const anthropic = new Anthropic({
+      apiKey: process.env.ANTHROPIC_API_KEY,
+    });
 
     const { message } = await request.json();
 

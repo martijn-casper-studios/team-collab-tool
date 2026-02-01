@@ -2,10 +2,6 @@ import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { getTeamMemberById } from "@/data/team";
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
-
 export async function POST(request: Request) {
   try {
     const { personAId, personBId } = await request.json();
@@ -80,6 +76,10 @@ Keep the tone professional but warm. Be specific and reference their actual pers
         { status: 500 }
       );
     }
+
+    const anthropic = new Anthropic({
+      apiKey: process.env.ANTHROPIC_API_KEY,
+    });
 
     const response = await anthropic.messages.create({
       model: "claude-3-5-sonnet-20241022",
