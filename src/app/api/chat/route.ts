@@ -46,6 +46,15 @@ Guidelines:
 
 export async function POST(request: Request) {
   try {
+    // Check if API key is configured
+    if (!process.env.ANTHROPIC_API_KEY) {
+      console.error("ANTHROPIC_API_KEY is not configured");
+      return NextResponse.json(
+        { error: "API key not configured" },
+        { status: 500 }
+      );
+    }
+
     const { message } = await request.json();
 
     if (!message) {
@@ -56,7 +65,7 @@ export async function POST(request: Request) {
     }
 
     const response = await anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
+      model: "claude-3-5-sonnet-20241022",
       max_tokens: 1024,
       system: systemPrompt,
       messages: [
@@ -71,10 +80,11 @@ export async function POST(request: Request) {
     const responseText = textContent ? textContent.text : "I apologize, but I couldn't generate a response.";
 
     return NextResponse.json({ response: responseText });
-  } catch (error) {
-    console.error("Chat API error:", error);
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    console.error("Chat API error:", errorMessage);
     return NextResponse.json(
-      { error: "Failed to process request" },
+      { error: `Failed to process request: ${errorMessage}` },
       { status: 500 }
     );
   }

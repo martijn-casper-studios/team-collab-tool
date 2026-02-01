@@ -73,8 +73,16 @@ What types of work or projects would this pair excel at together?
 
 Keep the tone professional but warm. Be specific and reference their actual personality data.`;
 
+    if (!process.env.ANTHROPIC_API_KEY) {
+      console.error("ANTHROPIC_API_KEY is not configured");
+      return NextResponse.json(
+        { error: "API key not configured" },
+        { status: 500 }
+      );
+    }
+
     const response = await anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
+      model: "claude-3-5-sonnet-20241022",
       max_tokens: 2048,
       messages: [
         {
@@ -88,10 +96,11 @@ Keep the tone professional but warm. Be specific and reference their actual pers
     const comparisonText = textContent ? textContent.text : "Unable to generate comparison.";
 
     return NextResponse.json({ comparison: comparisonText });
-  } catch (error) {
-    console.error("Compare API error:", error);
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    console.error("Compare API error:", errorMessage);
     return NextResponse.json(
-      { error: "Failed to process comparison" },
+      { error: `Failed to process comparison: ${errorMessage}` },
       { status: 500 }
     );
   }
