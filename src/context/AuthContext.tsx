@@ -1,48 +1,47 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { createContext, useContext, ReactNode } from "react";
+import { useSession, signIn, signOut } from "next-auth/react";
 import { TeamMember, getTeamMemberByEmail } from "@/data/team";
 
+interface AuthUser {
+  name: string;
+  email: string;
+  image?: string;
+  teamMember: TeamMember | null;
+}
+
 interface AuthContextType {
-  user: TeamMember | null;
+  user: AuthUser | null;
   isLoading: boolean;
-  login: (email: string) => { success: boolean; error?: string };
+  login: () => void;
   logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<TeamMember | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const { data: session, status } = useSession();
+  const isLoading = status === "loading";
 
-  useEffect(() => {
-    // Check for existing session
-    const storedEmail = localStorage.getItem("user_email");
-    if (storedEmail) {
-      const member = getTeamMemberByEmail(storedEmail);
-      if (member) {
-        setUser(member);
-      } else {
-        localStorage.removeItem("user_email");
-      }
-    }
-    setIsLoading(false);
-  }, []);
+  let user: AuthUser | null = null;
 
-  const login = (email: string): { success: boolean; error?: string } => {
-    const member = getTeamMemberByEmail(email);
-    if (member) {
-      setUser(member);
-      localStorage.setItem("user_email", email);
-      return { success: true };
-    }
-    return { success: false, error: "Email not found in team directory" };
+  if (session?.user?.email) {
+    const teamMember = getTeamMemberByEmail(session.user.email) ?? null;
+    user = {
+      name: session.user.name ?? "Unknown",
+      email: session.user.email,
+      image: session.user.image ?? undefined,
+      teamMember,
+    };
+  }
+
+  const login = () => {
+    signIn("google", { callbackUrl: "/dashboard" });
   };
 
   const logout = () => {
-    setUser(null);
-    localStorage.removeItem("user_email");
+    signOut({ callbackUrl: "/" });
   };
 
   return (

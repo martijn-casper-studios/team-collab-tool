@@ -8,7 +8,7 @@ import { TeamCard } from "@/components/TeamCard";
 import { teamMembers, getTeamMemberById, TeamMember } from "@/data/team";
 
 function CompareContent() {
-  const { user, isLoading } = useAuth();
+  const { isLoading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -16,12 +16,6 @@ function CompareContent() {
   const [personB, setPersonB] = useState<TeamMember | null>(null);
   const [comparison, setComparison] = useState<string | null>(null);
   const [isComparing, setIsComparing] = useState(false);
-
-  useEffect(() => {
-    if (!isLoading && !user) {
-      router.push("/");
-    }
-  }, [user, isLoading, router]);
 
   useEffect(() => {
     const aParam = searchParams.get("a");
@@ -72,7 +66,7 @@ function CompareContent() {
     }
   }, [personA?.id, personB?.id]);
 
-  if (isLoading || !user) {
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
