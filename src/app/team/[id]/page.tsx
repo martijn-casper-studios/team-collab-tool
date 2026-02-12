@@ -2,7 +2,6 @@
 
 import { useAuth } from "@/context/AuthContext";
 import { useRouter, useParams } from "next/navigation";
-import { useEffect } from "react";
 import { Navigation } from "@/components/Navigation";
 import { getTeamMemberById, teamMembers } from "@/data/team";
 import Link from "next/link";
@@ -25,18 +24,12 @@ function getAvatarColor(name: string): string {
 }
 
 export default function TeamMemberProfile() {
-  const { user, isLoading } = useAuth();
+  const { isLoading } = useAuth();
   const router = useRouter();
   const params = useParams();
   const member = getTeamMemberById(params.id as string);
 
-  useEffect(() => {
-    if (!isLoading && !user) {
-      router.push("/");
-    }
-  }, [user, isLoading, router]);
-
-  if (isLoading || !user) {
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>

@@ -12,7 +12,7 @@ interface Message {
 }
 
 function ChatContent() {
-  const { user, isLoading } = useAuth();
+  const { isLoading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const aboutParam = searchParams.get("about");
@@ -21,12 +21,6 @@ function ChatContent() {
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!isLoading && !user) {
-      router.push("/");
-    }
-  }, [user, isLoading, router]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -88,7 +82,7 @@ function ChatContent() {
     "What's the best way to collaborate with Martijn?",
   ];
 
-  if (isLoading || !user) {
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>

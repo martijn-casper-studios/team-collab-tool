@@ -2,7 +2,6 @@
 
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
 import { Navigation } from "@/components/Navigation";
 import { TeamCard } from "@/components/TeamCard";
 import { teamMembers } from "@/data/team";
@@ -11,13 +10,7 @@ export default function Dashboard() {
   const { user, isLoading } = useAuth();
   const router = useRouter();
 
-  useEffect(() => {
-    if (!isLoading && !user) {
-      router.push("/");
-    }
-  }, [user, isLoading, router]);
-
-  if (isLoading || !user) {
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
@@ -30,6 +23,12 @@ export default function Dashboard() {
       <Navigation />
 
       <main className="max-w-6xl mx-auto px-4 py-8">
+        {user && !user.teamMember && (
+          <div className="mb-6 bg-amber-50 border border-amber-200 text-amber-800 rounded-lg px-4 py-3 text-sm">
+            Welcome, {user.name}! Your profile hasn&apos;t been set up in the team directory yet. You can still browse the team and use all features.
+          </div>
+        )}
+
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-gray-900">Team Directory</h1>
           <p className="text-gray-500 mt-1">
