@@ -1,14 +1,16 @@
 import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
-import { teamMembers } from "@/data/team";
+import { getAllTeamMembers } from "@/lib/profiles";
 
-const systemPrompt = `You are a helpful team collaboration assistant for Casper Studios. Your role is to help team members understand each other better and work together more effectively.
+function buildSystemPrompt() {
+  const members = getAllTeamMembers();
+  return `You are a helpful team collaboration assistant for Casper Studios. Your role is to help team members understand each other better and work together more effectively.
 
 You have access to detailed personality profiles for all team members based on MBTI, DISC, Enneagram, CliftonStrengths, and Big Five assessments.
 
 Here are the team members and their profiles:
 
-${teamMembers.map(member => `
+${members.map(member => `
 ## ${member.name}
 - **MBTI**: ${member.mbti}
 - **DISC**: ${member.disc}
@@ -38,7 +40,8 @@ Guidelines:
 4. When comparing two people, highlight both complementary traits and potential friction points
 5. Give concrete examples of how to apply the advice
 6. Keep responses concise but comprehensive (aim for 150-300 words unless more detail is needed)
-7. If asked about someone not in the team, politely explain you only have data on the 7 team members listed`;
+7. If asked about someone not in the team, politely explain you only have data on the team members listed`;
+}
 
 export async function POST(request: Request) {
   try {
@@ -67,7 +70,7 @@ export async function POST(request: Request) {
     const response = await anthropic.messages.create({
       model: "claude-3-haiku-20240307",
       max_tokens: 1024,
-      system: systemPrompt,
+      system: buildSystemPrompt(),
       messages: [
         {
           role: "user",

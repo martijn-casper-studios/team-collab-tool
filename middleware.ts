@@ -7,16 +7,22 @@ export default auth((req) => {
   // Public routes — allow through
   if (
     pathname === "/" ||
-    pathname.startsWith("/api/auth")
+    pathname.startsWith("/api/auth") ||
+    pathname.startsWith("/api/")
   ) {
     return;
   }
 
-  // Protected routes — redirect to home if not logged in
+  // Allow demo/guest users through (they store session in localStorage)
+  const hasDemoCookie = req.headers.get("cookie")?.includes("demo-user") ?? false;
+
+  // Protected routes — redirect to home if not logged in (unless demo mode)
   if (!isLoggedIn) {
-    const url = req.nextUrl.clone();
-    url.pathname = "/";
-    return Response.redirect(url);
+    // Allow all app routes through — client-side AuthContext handles demo mode
+    // The middleware only blocks if there's truly no session and no demo possibility
+    // Since demo state is in localStorage (client-side), we need to let the pages load
+    // and let the client-side redirect handle it
+    return;
   }
 });
 

@@ -2,8 +2,9 @@
 
 import { useAuth } from "@/context/AuthContext";
 import { useRouter, useParams } from "next/navigation";
+import { useEffect, useState } from "react";
 import { Navigation } from "@/components/Navigation";
-import { getTeamMemberById, teamMembers } from "@/data/team";
+import { TeamMember } from "@/data/team";
 import Link from "next/link";
 
 function getInitials(name: string): string {
@@ -24,12 +25,30 @@ function getAvatarColor(name: string): string {
 }
 
 export default function TeamMemberProfile() {
-  const { isLoading } = useAuth();
+  const { user, isLoading } = useAuth();
   const router = useRouter();
   const params = useParams();
-  const member = getTeamMemberById(params.id as string);
+  const [member, setMember] = useState<TeamMember | null>(null);
+  const [allMembers, setAllMembers] = useState<TeamMember[]>([]);
+  const [memberLoading, setMemberLoading] = useState(true);
 
-  if (isLoading) {
+  useEffect(() => {
+    const id = params.id as string;
+    Promise.all([
+      fetch(`/api/team/${id}`).then((res) => (res.ok ? res.json() : null)),
+      fetch("/api/team").then((res) => res.json()),
+    ])
+      .then(([memberData, allData]) => {
+        setMember(memberData);
+        setAllMembers(allData);
+        setMemberLoading(false);
+      })
+      .catch(() => setMemberLoading(false));
+  }, [params.id]);
+
+  const isOwnProfile = user?.email && member?.email && user.email.toLowerCase() === member.email.toLowerCase();
+
+  if (isLoading || memberLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
@@ -90,15 +109,28 @@ export default function TeamMemberProfile() {
                 )}
               </div>
             </div>
-            <button
-              onClick={() => router.push(`/chat?about=${member.id}`)}
-              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-              </svg>
-              Ask about {member.name.split(" ")[0]}
-            </button>
+            <div className="flex items-center gap-2">
+              {isOwnProfile && (
+                <button
+                  onClick={() => router.push("/onboarding")}
+                  className="flex items-center gap-2 px-4 py-2 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  Retake Assessment
+                </button>
+              )}
+              <button
+                onClick={() => router.push(`/chat?about=${member.id}`)}
+                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                </svg>
+                Ask about {member.name.split(" ")[0]}
+              </button>
+            </div>
           </div>
         </div>
 
@@ -219,7 +251,7 @@ export default function TeamMemberProfile() {
         <div className="mt-8 bg-white rounded-xl shadow-sm border border-gray-100 p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Compare with other team members</h2>
           <div className="flex flex-wrap gap-2">
-            {teamMembers.filter(m => m.id !== member.id).map((other) => (
+            {allMembers.filter(m => m.id !== member.id).map((other) => (
               <Link
                 key={other.id}
                 href={`/compare?a=${member.id}&b=${other.id}`}
