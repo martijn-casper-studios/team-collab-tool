@@ -4,7 +4,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, useRef, Suspense } from "react";
 import { Navigation } from "@/components/Navigation";
-import { teamMembers, getTeamMemberById } from "@/data/team";
+import { TeamMember } from "@/data/team";
 
 interface Message {
   role: "user" | "assistant";
@@ -17,23 +17,31 @@ function ChatContent() {
   const searchParams = useSearchParams();
   const aboutParam = searchParams.get("about");
 
+  const [allMembers, setAllMembers] = useState<TeamMember[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    fetch("/api/team")
+      .then((res) => res.json())
+      .then((data) => setAllMembers(data))
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   useEffect(() => {
-    if (aboutParam) {
-      const member = getTeamMemberById(aboutParam);
+    if (aboutParam && allMembers.length > 0) {
+      const member = allMembers.find((m) => m.id === aboutParam);
       if (member) {
         setInput(`How can I work better with ${member.name}?`);
       }
     }
-  }, [aboutParam]);
+  }, [aboutParam, allMembers]);
 
   const sendMessage = async () => {
     if (!input.trim() || isTyping) return;
@@ -181,7 +189,7 @@ function ChatContent() {
             </button>
           </div>
           <div className="mt-3 flex flex-wrap gap-2">
-            {teamMembers.slice(0, 4).map((member) => (
+            {allMembers.slice(0, 4).map((member) => (
               <button
                 key={member.id}
                 onClick={() => setInput(`How can I work better with ${member.name}?`)}

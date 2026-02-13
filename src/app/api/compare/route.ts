@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
-import { getTeamMemberById } from "@/data/team";
+import { findTeamMemberById } from "@/lib/profiles";
 
 export async function POST(request: Request) {
   try {
@@ -13,8 +13,8 @@ export async function POST(request: Request) {
       );
     }
 
-    const personA = getTeamMemberById(personAId);
-    const personB = getTeamMemberById(personBId);
+    const personA = findTeamMemberById(personAId);
+    const personB = findTeamMemberById(personBId);
 
     if (!personA || !personB) {
       return NextResponse.json(

@@ -2,15 +2,29 @@
 
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { Navigation } from "@/components/Navigation";
 import { TeamCard } from "@/components/TeamCard";
-import { teamMembers } from "@/data/team";
+import { TeamMember } from "@/data/team";
+import Link from "next/link";
 
 export default function Dashboard() {
   const { user, isLoading } = useAuth();
   const router = useRouter();
+  const [members, setMembers] = useState<TeamMember[]>([]);
+  const [membersLoading, setMembersLoading] = useState(true);
 
-  if (isLoading) {
+  useEffect(() => {
+    fetch("/api/team")
+      .then((res) => res.json())
+      .then((data) => {
+        setMembers(data);
+        setMembersLoading(false);
+      })
+      .catch(() => setMembersLoading(false));
+  }, []);
+
+  if (isLoading || membersLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
@@ -23,9 +37,17 @@ export default function Dashboard() {
       <Navigation />
 
       <main className="max-w-6xl mx-auto px-4 py-8">
-        {user && !user.teamMember && (
-          <div className="mb-6 bg-amber-50 border border-amber-200 text-amber-800 rounded-lg px-4 py-3 text-sm">
-            Welcome, {user.name}! Your profile hasn&apos;t been set up in the team directory yet. You can still browse the team and use all features.
+        {user && !user.hasProfile && (
+          <div className="mb-6 bg-amber-50 border border-amber-200 text-amber-800 rounded-lg px-4 py-3 text-sm flex items-center justify-between">
+            <span>
+              Welcome, {user.name}! Take the personality assessment to create your collaboration profile.
+            </span>
+            <Link
+              href="/onboarding"
+              className="ml-4 px-4 py-1.5 bg-amber-600 text-white rounded-lg text-sm font-medium hover:bg-amber-700 transition-colors flex-shrink-0"
+            >
+              Take Assessment
+            </Link>
           </div>
         )}
 
@@ -37,7 +59,7 @@ export default function Dashboard() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {teamMembers.map((member) => (
+          {members.map((member) => (
             <TeamCard key={member.id} member={member} />
           ))}
         </div>

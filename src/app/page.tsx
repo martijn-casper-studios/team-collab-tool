@@ -11,7 +11,11 @@ export default function Home() {
 
   useEffect(() => {
     if (!isLoading && user) {
-      router.push("/dashboard");
+      if (!user.hasProfile) {
+        router.push("/onboarding");
+      } else {
+        router.push("/dashboard");
+      }
     }
   }, [user, isLoading, router]);
 

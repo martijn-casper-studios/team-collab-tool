@@ -5,30 +5,40 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, Suspense } from "react";
 import { Navigation } from "@/components/Navigation";
 import { TeamCard } from "@/components/TeamCard";
-import { teamMembers, getTeamMemberById, TeamMember } from "@/data/team";
+import { TeamMember } from "@/data/team";
 
 function CompareContent() {
   const { isLoading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
 
+  const [allMembers, setAllMembers] = useState<TeamMember[]>([]);
   const [personA, setPersonA] = useState<TeamMember | null>(null);
   const [personB, setPersonB] = useState<TeamMember | null>(null);
   const [comparison, setComparison] = useState<string | null>(null);
   const [isComparing, setIsComparing] = useState(false);
+  const [membersLoading, setMembersLoading] = useState(true);
 
   useEffect(() => {
-    const aParam = searchParams.get("a");
-    const bParam = searchParams.get("b");
+    fetch("/api/team")
+      .then((res) => res.json())
+      .then((data: TeamMember[]) => {
+        setAllMembers(data);
+        setMembersLoading(false);
 
-    if (aParam) {
-      const member = getTeamMemberById(aParam);
-      if (member) setPersonA(member);
-    }
-    if (bParam) {
-      const member = getTeamMemberById(bParam);
-      if (member) setPersonB(member);
-    }
+        const aParam = searchParams.get("a");
+        const bParam = searchParams.get("b");
+
+        if (aParam) {
+          const member = data.find((m: TeamMember) => m.id === aParam);
+          if (member) setPersonA(member);
+        }
+        if (bParam) {
+          const member = data.find((m: TeamMember) => m.id === bParam);
+          if (member) setPersonB(member);
+        }
+      })
+      .catch(() => setMembersLoading(false));
   }, [searchParams]);
 
   const runComparison = async () => {
@@ -66,7 +76,7 @@ function CompareContent() {
     }
   }, [personA?.id, personB?.id]);
 
-  if (isLoading) {
+  if (isLoading || membersLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
@@ -109,7 +119,7 @@ function CompareContent() {
               </div>
             ) : (
               <div className="grid grid-cols-1 gap-3">
-                {teamMembers.filter(m => m.id !== personB?.id).map((member) => (
+                {allMembers.filter(m => m.id !== personB?.id).map((member) => (
                   <TeamCard
                     key={member.id}
                     member={member}
@@ -143,7 +153,7 @@ function CompareContent() {
               </div>
             ) : (
               <div className="grid grid-cols-1 gap-3">
-                {teamMembers.filter(m => m.id !== personA?.id).map((member) => (
+                {allMembers.filter(m => m.id !== personA?.id).map((member) => (
                   <TeamCard
                     key={member.id}
                     member={member}

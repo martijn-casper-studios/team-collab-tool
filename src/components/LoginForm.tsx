@@ -3,7 +3,7 @@
 import { useAuth } from "@/context/AuthContext";
 
 export function LoginForm() {
-  const { login } = useAuth();
+  const { login, loginAsGuest } = useAuth();
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 px-4">
@@ -42,6 +42,22 @@ export function LoginForm() {
               />
             </svg>
             Sign in with Google
+          </button>
+
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-200"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-white text-gray-400">or</span>
+            </div>
+          </div>
+
+          <button
+            onClick={loginAsGuest}
+            className="w-full flex items-center justify-center gap-3 bg-gray-50 border border-gray-200 text-gray-600 py-3 px-4 rounded-lg font-medium hover:bg-gray-100 transition-all"
+          >
+            Continue as Guest
           </button>
 
           <p className="text-center text-sm text-gray-500">
