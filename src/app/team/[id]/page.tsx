@@ -2,27 +2,11 @@
 
 import { useAuth } from "@/context/AuthContext";
 import { useRouter, useParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Navigation } from "@/components/Navigation";
+import { Avatar } from "@/components/Avatar";
 import { TeamMember } from "@/data/team";
 import Link from "next/link";
-
-function getInitials(name: string): string {
-  return name.split(" ").map(n => n[0]).join("").toUpperCase();
-}
-
-function getAvatarColor(name: string): string {
-  const colors = [
-    "bg-indigo-500", "bg-purple-500", "bg-pink-500", "bg-red-500",
-    "bg-orange-500", "bg-amber-500", "bg-emerald-500", "bg-teal-500",
-    "bg-cyan-500", "bg-blue-500",
-  ];
-  let hash = 0;
-  for (let i = 0; i < name.length; i++) {
-    hash = name.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  return colors[Math.abs(hash) % colors.length];
-}
 
 export default function TeamMemberProfile() {
   const { user, isLoading } = useAuth();
@@ -31,6 +15,61 @@ export default function TeamMemberProfile() {
   const [member, setMember] = useState<TeamMember | null>(null);
   const [allMembers, setAllMembers] = useState<TeamMember[]>([]);
   const [memberLoading, setMemberLoading] = useState(true);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !member || !user) return;
+
+    setUploadingAvatar(true);
+    try {
+      const canvas = document.createElement("canvas");
+      const img = new Image();
+      const reader = new FileReader();
+
+      const dataUrl = await new Promise<string>((resolve) => {
+        reader.onload = () => resolve(reader.result as string);
+        reader.readAsDataURL(file);
+      });
+
+      await new Promise<void>((resolve) => {
+        img.onload = () => {
+          const maxSize = 200;
+          let w = img.width;
+          let h = img.height;
+          if (w > h) {
+            if (w > maxSize) { h = (h * maxSize) / w; w = maxSize; }
+          } else {
+            if (h > maxSize) { w = (w * maxSize) / h; h = maxSize; }
+          }
+          canvas.width = w;
+          canvas.height = h;
+          canvas.getContext("2d")!.drawImage(img, 0, 0, w, h);
+          resolve();
+        };
+        img.src = dataUrl;
+      });
+
+      const resizedDataUrl = canvas.toDataURL("image/jpeg", 0.8);
+
+      const res = await fetch("/api/update-avatar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: user.email, avatar: resizedDataUrl }),
+      });
+
+      if (!res.ok) throw new Error("Failed to upload");
+
+      const { profile } = await res.json();
+      setMember(profile);
+    } catch (err) {
+      console.error("Avatar upload failed:", err);
+    } finally {
+      setUploadingAvatar(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
 
   useEffect(() => {
     const id = params.id as string;
@@ -51,19 +90,19 @@ export default function TeamMemberProfile() {
   if (isLoading || memberLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[var(--accent)]"></div>
       </div>
     );
   }
 
   if (!member) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen">
         <Navigation />
-        <main className="max-w-4xl mx-auto px-4 py-8">
-          <div className="text-center py-12">
-            <h1 className="text-2xl font-bold text-gray-900">Team member not found</h1>
-            <Link href="/dashboard" className="text-indigo-600 hover:underline mt-4 inline-block">
+        <main className="max-w-4xl mx-auto px-4 py-10">
+          <div className="text-center py-16">
+            <h1 className="font-serif text-2xl text-[var(--fg)]">Team member not found</h1>
+            <Link href="/dashboard" className="text-[var(--accent)] hover:underline mt-4 inline-block text-sm">
               Back to team directory
             </Link>
           </div>
@@ -73,37 +112,63 @@ export default function TeamMemberProfile() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen">
       <Navigation />
 
-      <main className="max-w-4xl mx-auto px-4 py-8">
-        <Link href="/dashboard" className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-700 mb-6">
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <main className="max-w-4xl mx-auto px-4 py-10">
+        <Link href="/dashboard" className="inline-flex items-center gap-2 text-[var(--muted)] hover:text-[var(--fg)] mb-8 text-sm transition-editorial">
+          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
           Back to team
         </Link>
 
         {/* Header */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 mb-6">
+        <div className="bg-white border border-[var(--border)] p-8 mb-6">
           <div className="flex items-start gap-6">
-            <div className={`w-20 h-20 rounded-2xl ${getAvatarColor(member.name)} flex items-center justify-center text-white font-bold text-2xl`}>
-              {getInitials(member.name)}
+            <div className="relative group">
+              <Avatar name={member.name} avatar={member.avatar} size="lg" />
+              {isOwnProfile && (
+                <>
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploadingAvatar}
+                    className="absolute inset-0 rounded-full bg-black/0 group-hover:bg-black/40 flex items-center justify-center transition-all cursor-pointer"
+                  >
+                    <svg className="w-5 h-5 text-white opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                  </button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleAvatarUpload}
+                    className="hidden"
+                  />
+                </>
+              )}
+              {uploadingAvatar && (
+                <div className="absolute inset-0 rounded-full bg-black/40 flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white" />
+                </div>
+              )}
             </div>
             <div className="flex-1">
-              <h1 className="text-2xl font-bold text-gray-900">{member.name}</h1>
-              {member.role && <p className="text-gray-500 mt-1">{member.role}</p>}
-              <p className="text-sm text-gray-400 mt-1">{member.email}</p>
+              <h1 className="font-serif text-3xl font-light tracking-tight text-[var(--fg)]">{member.name}</h1>
+              {member.role && <p className="text-sm text-[var(--muted)] mt-1">{member.role}</p>}
+              <p className="text-xs text-[var(--muted)] mt-0.5 font-mono">{member.email}</p>
 
               <div className="flex flex-wrap gap-2 mt-4">
-                <span className="px-3 py-1.5 rounded-full text-sm font-medium bg-purple-100 text-purple-700">
+                <span className="label-mono px-2.5 py-1 border border-[var(--border)] text-[var(--fg)]">
                   {member.mbti}
                 </span>
-                <span className="px-3 py-1.5 rounded-full text-sm font-medium bg-blue-100 text-blue-700">
+                <span className="label-mono px-2.5 py-1 border border-[var(--border)] text-[var(--fg)]">
                   DISC: {member.disc}
                 </span>
                 {member.enneagram && member.enneagram !== "Not specified" && (
-                  <span className="px-3 py-1.5 rounded-full text-sm font-medium bg-amber-100 text-amber-700">
+                  <span className="label-mono px-2.5 py-1 border border-[var(--border)] text-[var(--muted)]">
                     {member.enneagram}
                   </span>
                 )}
@@ -113,42 +178,30 @@ export default function TeamMemberProfile() {
               {isOwnProfile && (
                 <button
                   onClick={() => router.push("/onboarding")}
-                  className="flex items-center gap-2 px-4 py-2 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="px-4 py-2 border border-[var(--border)] text-[var(--fg)] text-sm hover:bg-[var(--accent-light)] transition-editorial"
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                  </svg>
                   Retake Assessment
                 </button>
               )}
               <button
                 onClick={() => router.push(`/chat?about=${member.id}`)}
-                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                className="px-4 py-2 bg-[var(--accent)] text-white font-mono text-xs uppercase tracking-[0.15em] hover:bg-[var(--accent-hover)] transition-editorial"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                </svg>
                 Ask about {member.name.split(" ")[0]}
               </button>
             </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
           {/* Big Five */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Big Five (OCEAN)</h2>
+          <div className="bg-white border border-[var(--border)] p-6">
+            <h2 className="label-mono text-[var(--muted)] mb-4">Big Five (OCEAN)</h2>
             <div className="space-y-3">
               {Object.entries(member.bigFive).map(([trait, level]) => (
                 <div key={trait} className="flex items-center justify-between">
-                  <span className="text-gray-600 capitalize">{trait}</span>
-                  <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${
-                    level.toLowerCase().includes("high") || level.toLowerCase().includes("very high")
-                      ? "bg-green-100 text-green-700"
-                      : level.toLowerCase().includes("low")
-                      ? "bg-red-100 text-red-700"
-                      : "bg-yellow-100 text-yellow-700"
-                  }`}>
+                  <span className="text-sm text-[var(--fg)] capitalize">{trait}</span>
+                  <span className="label-mono px-2 py-0.5 border border-[var(--border)] text-[var(--muted)]">
                     {level}
                   </span>
                 </div>
@@ -157,11 +210,11 @@ export default function TeamMemberProfile() {
           </div>
 
           {/* Strengths */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">CliftonStrengths</h2>
+          <div className="bg-white border border-[var(--border)] p-6">
+            <h2 className="label-mono text-[var(--muted)] mb-4">CliftonStrengths</h2>
             <div className="flex flex-wrap gap-2">
               {member.cliftonStrengths.map((strength) => (
-                <span key={strength} className="px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded-lg text-sm font-medium">
+                <span key={strength} className="px-3 py-1.5 bg-[var(--accent-light)] text-[var(--accent)] text-sm font-mono">
                   {strength}
                 </span>
               ))}
@@ -169,30 +222,26 @@ export default function TeamMemberProfile() {
           </div>
 
           {/* Communication Style */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Communication Style</h2>
+          <div className="bg-white border border-[var(--border)] p-6">
+            <h2 className="label-mono text-[var(--muted)] mb-4">Communication Style</h2>
             <div className="space-y-4">
               <div>
-                <h3 className="text-sm font-medium text-gray-500 mb-2">How to communicate</h3>
+                <h3 className="label-mono text-[var(--accent)] mb-2">How to communicate</h3>
                 <ul className="space-y-2">
                   {member.communicationStyle.howToCommunicate.map((item, i) => (
-                    <li key={i} className="flex items-start gap-2 text-sm text-gray-600">
-                      <svg className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
+                    <li key={i} className="flex items-start gap-2 text-sm text-[var(--fg)]">
+                      <span className="text-[var(--accent)] mt-1 text-xs">—</span>
                       {item}
                     </li>
                   ))}
                 </ul>
               </div>
-              <div>
-                <h3 className="text-sm font-medium text-gray-500 mb-2">Feedback preference</h3>
+              <div className="pt-3 border-t border-[var(--border)]">
+                <h3 className="label-mono text-[var(--accent)] mb-2">Feedback preference</h3>
                 <ul className="space-y-2">
                   {member.communicationStyle.feedbackPreference.map((item, i) => (
-                    <li key={i} className="flex items-start gap-2 text-sm text-gray-600">
-                      <svg className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
+                    <li key={i} className="flex items-start gap-2 text-sm text-[var(--fg)]">
+                      <span className="text-[var(--accent)] mt-1 text-xs">—</span>
                       {item}
                     </li>
                   ))}
@@ -202,42 +251,32 @@ export default function TeamMemberProfile() {
           </div>
 
           {/* Ideal Collaborator */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Ideal Collaborator</h2>
-            <p className="text-gray-600 text-sm leading-relaxed">{member.idealCollaborator}</p>
+          <div className="bg-white border border-[var(--border)] p-6">
+            <h2 className="label-mono text-[var(--muted)] mb-4">Ideal Collaborator</h2>
+            <p className="text-sm text-[var(--fg)] leading-relaxed">{member.idealCollaborator}</p>
           </div>
 
           {/* User Manual */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 lg:col-span-2">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">User Manual</h2>
+          <div className="bg-white border border-[var(--border)] p-6 lg:col-span-2">
+            <h2 className="label-mono text-[var(--muted)] mb-4">User Manual</h2>
             <div className="grid md:grid-cols-2 gap-6">
               <div>
-                <h3 className="flex items-center gap-2 text-sm font-medium text-green-700 mb-3">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  How to get the best out of me
-                </h3>
+                <h3 className="label-mono text-[var(--accent)] mb-3">How to get the best out of me</h3>
                 <ul className="space-y-2">
                   {member.userManual.howToGetBestOut.map((item, i) => (
-                    <li key={i} className="flex items-start gap-2 text-sm text-gray-600">
-                      <span className="text-green-500 mt-1">•</span>
+                    <li key={i} className="flex items-start gap-2 text-sm text-[var(--fg)]">
+                      <span className="text-[var(--accent)] mt-1 text-xs">+</span>
                       {item}
                     </li>
                   ))}
                 </ul>
               </div>
-              <div>
-                <h3 className="flex items-center gap-2 text-sm font-medium text-red-700 mb-3">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  What shuts me down
-                </h3>
+              <div className="border-l border-[var(--border)] pl-6">
+                <h3 className="label-mono text-[#8b5e5e] mb-3">What shuts me down</h3>
                 <ul className="space-y-2">
                   {member.userManual.whatShutsDown.map((item, i) => (
-                    <li key={i} className="flex items-start gap-2 text-sm text-gray-600">
-                      <span className="text-red-500 mt-1">•</span>
+                    <li key={i} className="flex items-start gap-2 text-sm text-[var(--fg)]">
+                      <span className="text-[#8b5e5e] mt-1 text-xs">×</span>
                       {item}
                     </li>
                   ))}
@@ -248,14 +287,14 @@ export default function TeamMemberProfile() {
         </div>
 
         {/* Compare with others */}
-        <div className="mt-8 bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Compare with other team members</h2>
+        <div className="mt-8 border border-[var(--border)] bg-white p-6">
+          <h2 className="label-mono text-[var(--muted)] mb-4">Compare with other team members</h2>
           <div className="flex flex-wrap gap-2">
             {allMembers.filter(m => m.id !== member.id).map((other) => (
               <Link
                 key={other.id}
                 href={`/compare?a=${member.id}&b=${other.id}`}
-                className="px-4 py-2 bg-gray-50 hover:bg-indigo-50 text-gray-700 hover:text-indigo-700 rounded-lg text-sm transition-colors"
+                className="px-4 py-2 border border-[var(--border)] text-[var(--fg)] text-sm font-mono hover:border-[var(--accent)] hover:bg-[var(--accent-light)] transition-editorial"
               >
                 vs {other.name}
               </Link>

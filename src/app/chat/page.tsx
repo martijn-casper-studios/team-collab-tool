@@ -93,40 +93,40 @@ function ChatContent() {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[var(--accent)]"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen flex flex-col">
       <Navigation />
 
-      <main className="flex-1 max-w-4xl mx-auto w-full px-4 py-6 flex flex-col">
-        <div className="mb-4">
-          <h1 className="text-2xl font-bold text-gray-900">Ask AI Assistant</h1>
-          <p className="text-gray-500">Ask questions about team members, communication styles, and collaboration tips</p>
+      <main className="flex-1 max-w-4xl mx-auto w-full px-4 py-8 flex flex-col">
+        <div className="mb-6">
+          <h1 className="font-serif text-3xl font-light tracking-tight text-[var(--fg)]">Ask AI Assistant</h1>
+          <p className="text-sm text-[var(--muted)] mt-1">Questions about team members, communication styles, and collaboration</p>
         </div>
 
         {/* Chat messages */}
-        <div className="flex-1 bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-4 overflow-y-auto min-h-[400px] max-h-[calc(100vh-320px)]">
+        <div className="flex-1 bg-white border border-[var(--border)] p-6 mb-4 overflow-y-auto min-h-[400px] max-h-[calc(100vh-320px)]">
           {messages.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-center">
-              <div className="w-16 h-16 rounded-full bg-indigo-100 flex items-center justify-center mb-4">
-                <svg className="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+              <div className="w-12 h-12 bg-[var(--accent-light)] flex items-center justify-center mb-5">
+                <svg className="w-5 h-5 text-[var(--accent)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                 </svg>
               </div>
-              <h2 className="text-lg font-semibold text-gray-900 mb-2">Start a conversation</h2>
-              <p className="text-gray-500 mb-6 max-w-md">
-                Ask me anything about your teammates&apos; personalities, communication preferences, or how to collaborate more effectively.
+              <h2 className="font-serif text-lg text-[var(--fg)] mb-2">Start a conversation</h2>
+              <p className="text-sm text-[var(--muted)] mb-6 max-w-md">
+                Ask me anything about your teammates&apos; personalities, communication preferences, or collaboration.
               </p>
               <div className="flex flex-wrap gap-2 justify-center max-w-lg">
                 {suggestedQuestions.map((question, i) => (
                   <button
                     key={i}
                     onClick={() => setInput(question)}
-                    className="px-3 py-1.5 bg-gray-100 hover:bg-indigo-50 text-gray-600 hover:text-indigo-700 rounded-full text-sm transition-colors"
+                    className="px-3 py-1.5 border border-[var(--border)] text-[var(--muted)] text-xs font-mono hover:border-[var(--accent)] hover:text-[var(--accent)] transition-editorial"
                   >
                     {question}
                   </button>
@@ -141,10 +141,10 @@ function ChatContent() {
                   className={`chat-message flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
                 >
                   <div
-                    className={`max-w-[80%] rounded-2xl px-4 py-3 ${
+                    className={`max-w-[80%] px-4 py-3 ${
                       message.role === "user"
-                        ? "bg-indigo-600 text-white"
-                        : "bg-gray-100 text-gray-800"
+                        ? "bg-[var(--accent)] text-white"
+                        : "bg-[var(--bg)] border border-[var(--border)] text-[var(--fg)]"
                     }`}
                   >
                     <p className="whitespace-pre-wrap text-sm leading-relaxed">{message.content}</p>
@@ -153,11 +153,11 @@ function ChatContent() {
               ))}
               {isTyping && (
                 <div className="chat-message flex justify-start">
-                  <div className="bg-gray-100 rounded-2xl px-4 py-3">
-                    <div className="flex gap-1">
-                      <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }}></span>
-                      <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }}></span>
-                      <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }}></span>
+                  <div className="bg-[var(--bg)] border border-[var(--border)] px-4 py-3">
+                    <div className="flex gap-1.5">
+                      <span className="w-1.5 h-1.5 bg-[var(--muted)] rounded-full animate-bounce" style={{ animationDelay: "0ms" }}></span>
+                      <span className="w-1.5 h-1.5 bg-[var(--muted)] rounded-full animate-bounce" style={{ animationDelay: "150ms" }}></span>
+                      <span className="w-1.5 h-1.5 bg-[var(--muted)] rounded-full animate-bounce" style={{ animationDelay: "300ms" }}></span>
                     </div>
                   </div>
                 </div>
@@ -168,7 +168,7 @@ function ChatContent() {
         </div>
 
         {/* Input */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+        <div className="bg-white border border-[var(--border)] p-4">
           <div className="flex gap-3">
             <input
               type="text"
@@ -176,16 +176,14 @@ function ChatContent() {
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Ask about a team member..."
-              className="flex-1 px-4 py-3 rounded-lg border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all outline-none text-gray-900"
+              className="flex-1 px-4 py-3 border border-[var(--border)] bg-[var(--bg)] focus:border-[var(--accent)] focus:outline-none transition-editorial text-sm text-[var(--fg)]"
             />
             <button
               onClick={sendMessage}
               disabled={!input.trim() || isTyping}
-              className="px-6 py-3 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 focus:ring-4 focus:ring-indigo-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-5 py-3 bg-[var(--accent)] text-white font-mono text-xs uppercase tracking-[0.15em] hover:bg-[var(--accent-hover)] transition-editorial disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-              </svg>
+              Send
             </button>
           </div>
           <div className="mt-3 flex flex-wrap gap-2">
@@ -193,9 +191,9 @@ function ChatContent() {
               <button
                 key={member.id}
                 onClick={() => setInput(`How can I work better with ${member.name}?`)}
-                className="px-3 py-1 bg-gray-50 hover:bg-indigo-50 text-gray-500 hover:text-indigo-700 rounded-full text-xs transition-colors"
+                className="px-2.5 py-1 border border-[var(--border)] text-[var(--muted)] text-xs font-mono hover:border-[var(--accent)] hover:text-[var(--accent)] transition-editorial"
               >
-                Ask about {member.name.split(" ")[0]}
+                {member.name.split(" ")[0]}
               </button>
             ))}
           </div>
@@ -209,7 +207,7 @@ export default function ChatPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[var(--accent)]"></div>
       </div>
     }>
       <ChatContent />

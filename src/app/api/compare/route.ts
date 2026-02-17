@@ -13,8 +13,8 @@ export async function POST(request: Request) {
       );
     }
 
-    const personA = findTeamMemberById(personAId);
-    const personB = findTeamMemberById(personBId);
+    const personA = await findTeamMemberById(personAId);
+    const personB = await findTeamMemberById(personBId);
 
     if (!personA || !personB) {
       return NextResponse.json(

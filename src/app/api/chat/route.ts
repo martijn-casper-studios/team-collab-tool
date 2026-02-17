@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { getAllTeamMembers } from "@/lib/profiles";
 
-function buildSystemPrompt() {
-  const members = getAllTeamMembers();
+async function buildSystemPrompt() {
+  const members = await getAllTeamMembers();
   return `You are a helpful team collaboration assistant for Casper Studios. Your role is to help team members understand each other better and work together more effectively.
 
 You have access to detailed personality profiles for all team members based on MBTI, DISC, Enneagram, CliftonStrengths, and Big Five assessments.
@@ -70,7 +70,7 @@ export async function POST(request: Request) {
     const response = await anthropic.messages.create({
       model: "claude-3-haiku-20240307",
       max_tokens: 1024,
-      system: buildSystemPrompt(),
+      system: await buildSystemPrompt(),
       messages: [
         {
           role: "user",

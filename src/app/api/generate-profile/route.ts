@@ -11,7 +11,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { answers, userName, userEmail } = await request.json();
+    const { answers, userName, userEmail, userImage } = await request.json();
 
     if (!answers || !userName || !userEmail) {
       return NextResponse.json(
@@ -118,6 +118,11 @@ Make the profile detailed, specific, and actionable—as if written by a profess
         .replace(/[^a-z\s]/g, "")
         .trim()
         .replace(/\s+/g, "-");
+    }
+
+    // Attach Google OAuth image if available
+    if (userImage) {
+      profile.avatar = userImage;
     }
 
     return NextResponse.json({ profile });

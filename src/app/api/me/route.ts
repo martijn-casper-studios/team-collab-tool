@@ -10,8 +10,8 @@ export async function GET() {
   }
 
   const email = session.user.email;
-  const profileExists = hasProfile(email);
-  const profile = profileExists ? findTeamMemberByEmail(email) : null;
+  const profileExists = await hasProfile(email);
+  const profile = profileExists ? await findTeamMemberByEmail(email) : null;
 
   return NextResponse.json({ hasProfile: profileExists, profile });
 }
