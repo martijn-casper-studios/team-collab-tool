@@ -28,7 +28,7 @@ export default function OnboardingPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[var(--accent)]"></div>
       </div>
     );
   }
@@ -53,7 +53,6 @@ export default function OnboardingPage() {
     if (currentQuestion < quizQuestions.length - 1) {
       setCurrentQuestion((prev) => prev + 1);
     } else {
-      // Last question — generate profile
       setStage("generating");
       setError(null);
       try {
@@ -64,6 +63,7 @@ export default function OnboardingPage() {
             answers,
             userName: user.name,
             userEmail: user.email,
+            userImage: user.image,
           }),
         });
 
@@ -120,12 +120,12 @@ export default function OnboardingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen">
       <Navigation />
 
-      <main className="max-w-6xl mx-auto px-4 py-8">
+      <main className="max-w-6xl mx-auto px-4 py-10">
         {error && (
-          <div className="mb-6 bg-red-50 border border-red-200 text-red-800 rounded-lg px-4 py-3 text-sm max-w-2xl mx-auto">
+          <div className="mb-6 border border-[#8b5e5e] bg-[#8b5e5e]/5 text-[#8b5e5e] px-4 py-3 text-sm max-w-2xl mx-auto">
             {error}
           </div>
         )}
@@ -154,12 +154,12 @@ export default function OnboardingPage() {
 
         {stage === "generating" && (
           <div className="max-w-2xl mx-auto text-center py-20">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-6"></div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--accent)] mx-auto mb-6"></div>
+            <h2 className="font-serif text-xl text-[var(--fg)] mb-2">
               Generating your profile...
             </h2>
-            <p className="text-gray-500">
-              Our AI is analyzing your responses across 5 personality frameworks
+            <p className="text-sm text-[var(--muted)]">
+              Analyzing your responses across 5 personality frameworks
             </p>
           </div>
         )}

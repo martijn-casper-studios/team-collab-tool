@@ -1,27 +1,16 @@
-import fs from "fs";
-import path from "path";
+import { prisma } from "@/lib/prisma";
 import { TeamMember, teamMembers } from "@/data/team";
+import { Prisma } from "@prisma/client";
 
-const GENERATED_PROFILES_PATH = path.join(
-  process.cwd(),
-  "data",
-  "generated-profiles.json"
-);
-
-export function getGeneratedProfiles(): TeamMember[] {
-  try {
-    const raw = fs.readFileSync(GENERATED_PROFILES_PATH, "utf-8");
-    return JSON.parse(raw) as TeamMember[];
-  } catch {
-    return [];
-  }
+export async function getGeneratedProfiles(): Promise<TeamMember[]> {
+  const rows = await prisma.profile.findMany();
+  return rows.map((r) => r.data as unknown as TeamMember);
 }
 
-export function getAllTeamMembers(): TeamMember[] {
-  const generated = getGeneratedProfiles();
+export async function getAllTeamMembers(): Promise<TeamMember[]> {
+  const generated = await getGeneratedProfiles();
   const generatedEmails = new Set(generated.map((p) => p.email.toLowerCase()));
 
-  // Generated profiles override hardcoded ones
   const hardcodedOnly = teamMembers.filter(
     (m) => !generatedEmails.has(m.email.toLowerCase())
   );
@@ -29,31 +18,48 @@ export function getAllTeamMembers(): TeamMember[] {
   return [...hardcodedOnly, ...generated];
 }
 
-export function findTeamMemberByEmail(
+export async function findTeamMemberByEmail(
   email: string
-): TeamMember | undefined {
-  const all = getAllTeamMembers();
-  return all.find((m) => m.email.toLowerCase() === email.toLowerCase());
-}
+): Promise<TeamMember | undefined> {
+  const row = await prisma.profile.findUnique({
+    where: { email: email.toLowerCase() },
+  });
+  if (row) return row.data as unknown as TeamMember;
 
-export function findTeamMemberById(id: string): TeamMember | undefined {
-  const all = getAllTeamMembers();
-  return all.find((m) => m.id === id);
-}
-
-export function hasProfile(email: string): boolean {
-  return !!findTeamMemberByEmail(email);
-}
-
-export function saveProfile(profile: TeamMember): void {
-  const profiles = getGeneratedProfiles();
-  const idx = profiles.findIndex(
-    (p) => p.email.toLowerCase() === profile.email.toLowerCase()
+  return teamMembers.find(
+    (m) => m.email.toLowerCase() === email.toLowerCase()
   );
-  if (idx >= 0) {
-    profiles[idx] = profile;
-  } else {
-    profiles.push(profile);
-  }
-  fs.writeFileSync(GENERATED_PROFILES_PATH, JSON.stringify(profiles, null, 2));
+}
+
+export async function findTeamMemberById(
+  id: string
+): Promise<TeamMember | undefined> {
+  const row = await prisma.profile.findUnique({
+    where: { slug: id },
+  });
+  if (row) return row.data as unknown as TeamMember;
+
+  return teamMembers.find((m) => m.id === id);
+}
+
+export async function hasProfile(email: string): Promise<boolean> {
+  const member = await findTeamMemberByEmail(email);
+  return !!member;
+}
+
+export async function saveProfile(profile: TeamMember): Promise<void> {
+  await prisma.profile.upsert({
+    where: { email: profile.email.toLowerCase() },
+    update: {
+      slug: profile.id,
+      name: profile.name,
+      data: JSON.parse(JSON.stringify(profile)) as Prisma.InputJsonValue,
+    },
+    create: {
+      slug: profile.id,
+      email: profile.email.toLowerCase(),
+      name: profile.name,
+      data: JSON.parse(JSON.stringify(profile)) as Prisma.InputJsonValue,
+    },
+  });
 }

@@ -13,7 +13,7 @@ export async function POST(request: Request) {
       );
     }
 
-    saveProfile(profile);
+    await saveProfile(profile);
 
     return NextResponse.json({ success: true });
   } catch (error: unknown) {

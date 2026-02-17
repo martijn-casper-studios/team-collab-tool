@@ -27,23 +27,23 @@ export function QuizQuestion({
     <div className="max-w-2xl mx-auto">
       {/* Progress bar */}
       <div className="mb-8">
-        <div className="flex items-center justify-between text-sm text-gray-500 mb-2">
-          <span>
+        <div className="flex items-center justify-between mb-2">
+          <span className="label-mono text-[var(--muted)]">
             Question {currentIndex + 1} of {totalQuestions}
           </span>
-          <span>{question.topic}</span>
+          <span className="label-mono text-[var(--muted)]">{question.topic}</span>
         </div>
-        <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+        <div className="w-full h-px bg-[var(--border)] relative">
           <div
-            className="h-full bg-indigo-600 rounded-full transition-all duration-300"
+            className="h-px bg-[var(--accent)] transition-editorial absolute inset-y-0 left-0"
             style={{ width: `${progress}%` }}
           />
         </div>
       </div>
 
       {/* Question */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 mb-6">
-        <h2 className="text-xl font-semibold text-gray-900 mb-6">
+      <div className="bg-white border border-[var(--border)] p-8 mb-6">
+        <h2 className="font-serif text-xl text-[var(--fg)] mb-6 leading-relaxed">
           {question.scenario}
         </h2>
 
@@ -52,27 +52,27 @@ export function QuizQuestion({
             <button
               key={option.label}
               onClick={() => onSelect(option.label)}
-              className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
+              className={`w-full text-left p-4 border transition-editorial ${
                 selectedAnswer === option.label
-                  ? "border-indigo-600 bg-indigo-50"
-                  : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                  ? "border-[var(--accent)] bg-[var(--accent-light)]"
+                  : "border-[var(--border)] hover:border-[var(--accent)]"
               }`}
             >
               <div className="flex items-start gap-3">
                 <span
-                  className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-bold ${
+                  className={`w-7 h-7 flex items-center justify-center flex-shrink-0 font-mono text-xs font-bold border ${
                     selectedAnswer === option.label
-                      ? "bg-indigo-600 text-white"
-                      : "bg-gray-100 text-gray-500"
+                      ? "bg-[var(--accent)] text-white border-[var(--accent)]"
+                      : "border-[var(--border)] text-[var(--muted)]"
                   }`}
                 >
                   {option.label}
                 </span>
                 <span
-                  className={`text-sm leading-relaxed pt-1 ${
+                  className={`text-sm leading-relaxed pt-0.5 ${
                     selectedAnswer === option.label
-                      ? "text-indigo-900 font-medium"
-                      : "text-gray-700"
+                      ? "text-[var(--fg)] font-medium"
+                      : "text-[var(--fg)]"
                   }`}
                 >
                   {option.text}
@@ -88,20 +88,10 @@ export function QuizQuestion({
         <button
           onClick={onBack}
           disabled={currentIndex === 0}
-          className="flex items-center gap-2 px-4 py-2 text-gray-500 hover:text-gray-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+          className="flex items-center gap-2 px-4 py-2 text-[var(--muted)] hover:text-[var(--fg)] disabled:opacity-30 disabled:cursor-not-allowed transition-editorial text-sm"
         >
-          <svg
-            className="w-4 h-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M15 19l-7-7 7-7"
-            />
+          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
           Back
         </button>
@@ -109,21 +99,11 @@ export function QuizQuestion({
         <button
           onClick={onNext}
           disabled={!selectedAnswer}
-          className="flex items-center gap-2 px-6 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="flex items-center gap-2 px-6 py-2 bg-[var(--accent)] text-white font-mono text-xs uppercase tracking-[0.15em] hover:bg-[var(--accent-hover)] disabled:opacity-40 disabled:cursor-not-allowed transition-editorial"
         >
           {currentIndex === totalQuestions - 1 ? "See Results" : "Next"}
-          <svg
-            className="w-4 h-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M9 5l7 7-7 7"
-            />
+          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
           </svg>
         </button>
       </div>

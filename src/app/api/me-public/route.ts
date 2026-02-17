@@ -9,8 +9,8 @@ export async function GET(request: Request) {
     return NextResponse.json({ hasProfile: false, profile: null });
   }
 
-  const profileExists = hasProfile(email);
-  const profile = profileExists ? findTeamMemberByEmail(email) : null;
+  const profileExists = await hasProfile(email);
+  const profile = profileExists ? await findTeamMemberByEmail(email) : null;
 
   return NextResponse.json({ hasProfile: profileExists, profile });
 }

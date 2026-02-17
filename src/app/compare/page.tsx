@@ -18,6 +18,16 @@ function CompareContent() {
   const [comparison, setComparison] = useState<string | null>(null);
   const [isComparing, setIsComparing] = useState(false);
   const [membersLoading, setMembersLoading] = useState(true);
+  const [copied, setCopied] = useState(false);
+
+  const handleShareComparison = async () => {
+    if (!personA || !personB) return;
+    const compareUrl = `${window.location.origin}/compare?a=${personA.id}&b=${personB.id}`;
+    const message = `Check out our team compatibility! ${personA.name} & ${personB.name} comparison → ${compareUrl}`;
+    await navigator.clipboard.writeText(message);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   useEffect(() => {
     fetch("/api/team")
@@ -79,19 +89,19 @@ function CompareContent() {
   if (isLoading || membersLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[var(--accent)]"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen">
       <Navigation />
 
-      <main className="max-w-6xl mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">Compare Team Members</h1>
-          <p className="text-gray-500 mt-1">
+      <main className="max-w-6xl mx-auto px-4 py-10">
+        <div className="mb-10">
+          <h1 className="font-serif text-3xl font-light tracking-tight text-[var(--fg)]">Compare Team Members</h1>
+          <p className="text-sm text-[var(--muted)] mt-2">
             Select two team members to see how their personalities complement each other
           </p>
         </div>
@@ -99,7 +109,7 @@ function CompareContent() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
           {/* Person A Selection */}
           <div>
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">
+            <h2 className="label-mono text-[var(--muted)] mb-4">
               {personA ? "Person A" : "Select Person A"}
             </h2>
             {personA ? (
@@ -110,9 +120,9 @@ function CompareContent() {
                     setPersonA(null);
                     setComparison(null);
                   }}
-                  className="absolute top-2 right-2 w-8 h-8 bg-white rounded-full shadow-md flex items-center justify-center text-gray-400 hover:text-gray-600"
+                  className="absolute top-3 right-3 w-7 h-7 bg-white border border-[var(--border)] flex items-center justify-center text-[var(--muted)] hover:text-[var(--fg)] transition-editorial"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
@@ -133,7 +143,7 @@ function CompareContent() {
 
           {/* Person B Selection */}
           <div>
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">
+            <h2 className="label-mono text-[var(--muted)] mb-4">
               {personB ? "Person B" : "Select Person B"}
             </h2>
             {personB ? (
@@ -144,9 +154,9 @@ function CompareContent() {
                     setPersonB(null);
                     setComparison(null);
                   }}
-                  className="absolute top-2 right-2 w-8 h-8 bg-white rounded-full shadow-md flex items-center justify-center text-gray-400 hover:text-gray-600"
+                  className="absolute top-3 right-3 w-7 h-7 bg-white border border-[var(--border)] flex items-center justify-center text-[var(--muted)] hover:text-[var(--fg)] transition-editorial"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
@@ -168,30 +178,54 @@ function CompareContent() {
 
         {/* Comparison Result */}
         {(personA && personB) && (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8">
+          <div className="bg-white border border-[var(--border)] p-8">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold text-gray-900">
+              <h2 className="font-serif text-xl text-[var(--fg)]">
                 {personA.name.split(" ")[0]} & {personB.name.split(" ")[0]} — Compatibility Analysis
               </h2>
-              <button
-                onClick={runComparison}
-                disabled={isComparing}
-                className="px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg text-sm font-medium hover:bg-indigo-200 transition-colors disabled:opacity-50"
-              >
-                {isComparing ? "Analyzing..." : "Refresh Analysis"}
-              </button>
+              <div className="flex items-center gap-2">
+                {!isComparing && comparison && (
+                  <button
+                    onClick={handleShareComparison}
+                    className="px-4 py-2 border border-[var(--border)] text-[var(--fg)] font-mono text-xs uppercase tracking-[0.15em] hover:border-[var(--accent)] hover:bg-[var(--accent-light)] transition-editorial flex items-center gap-2"
+                  >
+                    {copied ? (
+                      <>
+                        <svg className="w-3.5 h-3.5 text-[var(--accent)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        Copied!
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                        </svg>
+                        Share
+                      </>
+                    )}
+                  </button>
+                )}
+                <button
+                  onClick={runComparison}
+                  disabled={isComparing}
+                  className="px-4 py-2 border border-[var(--border)] text-[var(--fg)] font-mono text-xs uppercase tracking-[0.15em] hover:border-[var(--accent)] hover:bg-[var(--accent-light)] transition-editorial disabled:opacity-40"
+                >
+                  {isComparing ? "Analyzing..." : "Refresh"}
+                </button>
+              </div>
             </div>
 
             {isComparing ? (
-              <div className="flex items-center justify-center py-12">
+              <div className="flex items-center justify-center py-16">
                 <div className="flex flex-col items-center gap-4">
-                  <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600"></div>
-                  <p className="text-gray-500">Analyzing compatibility...</p>
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--accent)]"></div>
+                  <p className="text-sm text-[var(--muted)]">Analyzing compatibility...</p>
                 </div>
               </div>
             ) : comparison ? (
               <div className="prose prose-gray max-w-none">
-                <div className="whitespace-pre-wrap text-gray-700 leading-relaxed">
+                <div className="whitespace-pre-wrap text-sm text-[var(--fg)] leading-relaxed">
                   {comparison}
                 </div>
               </div>
@@ -199,27 +233,27 @@ function CompareContent() {
 
             {/* Quick Stats */}
             {!isComparing && comparison && (
-              <div className="mt-8 pt-6 border-t border-gray-100">
-                <h3 className="text-sm font-medium text-gray-500 mb-4">At a Glance</h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <p className="text-xs text-gray-500 mb-1">MBTI</p>
-                    <p className="font-medium text-gray-900">{personA.mbti} ↔ {personB.mbti}</p>
+              <div className="mt-8 pt-6 border-t border-[var(--border)]">
+                <h3 className="label-mono text-[var(--muted)] mb-4">At a Glance</h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <div className="border border-[var(--border)] p-4">
+                    <p className="label-mono text-[var(--muted)] mb-1">MBTI</p>
+                    <p className="font-mono text-sm text-[var(--fg)]">{personA.mbti} / {personB.mbti}</p>
                   </div>
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <p className="text-xs text-gray-500 mb-1">DISC</p>
-                    <p className="font-medium text-gray-900">{personA.disc.split(" ")[0]} ↔ {personB.disc.split(" ")[0]}</p>
+                  <div className="border border-[var(--border)] p-4">
+                    <p className="label-mono text-[var(--muted)] mb-1">DISC</p>
+                    <p className="font-mono text-sm text-[var(--fg)]">{personA.disc.split(" ")[0]} / {personB.disc.split(" ")[0]}</p>
                   </div>
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <p className="text-xs text-gray-500 mb-1">Enneagram</p>
-                    <p className="font-medium text-gray-900 text-sm">
-                      {personA.enneagram.split(" ").slice(0, 2).join(" ")} ↔ {personB.enneagram.split(" ").slice(0, 2).join(" ")}
+                  <div className="border border-[var(--border)] p-4">
+                    <p className="label-mono text-[var(--muted)] mb-1">Enneagram</p>
+                    <p className="font-mono text-xs text-[var(--fg)]">
+                      {personA.enneagram.split(" ").slice(0, 2).join(" ")} / {personB.enneagram.split(" ").slice(0, 2).join(" ")}
                     </p>
                   </div>
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <p className="text-xs text-gray-500 mb-1">Top Strengths</p>
-                    <p className="font-medium text-gray-900 text-sm">
-                      {personA.cliftonStrengths[0]} ↔ {personB.cliftonStrengths[0]}
+                  <div className="border border-[var(--border)] p-4">
+                    <p className="label-mono text-[var(--muted)] mb-1">Top Strength</p>
+                    <p className="font-mono text-sm text-[var(--fg)]">
+                      {personA.cliftonStrengths[0]} / {personB.cliftonStrengths[0]}
                     </p>
                   </div>
                 </div>
@@ -236,7 +270,7 @@ export default function ComparePage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[var(--accent)]"></div>
       </div>
     }>
       <CompareContent />

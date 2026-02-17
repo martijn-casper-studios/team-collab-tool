@@ -6,7 +6,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const member = findTeamMemberById(id);
+  const member = await findTeamMemberById(id);
 
   if (!member) {
     return NextResponse.json(
